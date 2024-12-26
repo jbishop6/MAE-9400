@@ -202,7 +202,14 @@ for kk = 1:length(vec)
         fprintf('Calling perform_fast_marching_mesh for M...\n');
 
         % Call the fast marching function to calculate geodesic distances for M
-       distances = perform_fast_marching_mesh(M.VERT, M.TRIV, idx, options.option1);
+        fprintf('\nSize of vertices:')
+       disp(size(M.VERT))
+       fprintf('\nSize of faces')
+       disp(size(M.TRIV))
+       fprintf('\nSize of start points')
+       disp(idx)
+       fprintf(size(idx))
+       distances = perform_fast_marching_mesh(M.VERT', M.TRIV', idx, options.option1);
 
 
         % Check if distances are valid

@@ -53,9 +53,22 @@ function [D, S, Q] = perform_fast_marching_mesh(vertex, faces, start_points, opt
     start_points = start_points(:);
     end_points = end_points(:);
     
+    % Display input sizes for debugging
+    fprintf('vertex size: %d x %d\n', size(vertex, 1), size(vertex, 2));
+    fprintf('faces size: %d x %d\n', size(faces, 1), size(faces, 2));
+    fprintf('start_points size: %d x %d\n', size(start_points, 1), size(start_points, 2));
+    fprintf('end_points size: %d x %d\n', size(end_points, 1), size(end_points, 2));
+    fprintf('W size: %d x %d\n', size(W, 1), size(W, 2));
+    
     % Call the fast C-coded version if possible
-    [D, S, Q] = perform_front_propagation_mesh(vertex, faces - 1, W, start_points - 1, end_points - 1, nb_iter_max, H, L, values, dmax);
-    Q = Q + 1;
+    try
+        [D, S, Q] = perform_front_propagation_mesh(vertex, faces - 1, W, start_points - 1, end_points - 1, nb_iter_max, H, L, values, dmax);
+        Q = Q + 1;
+    catch ME
+        disp('Error occurred in perform_front_propagation_mesh:');
+        disp(ME.message);
+        rethrow(ME);
+    end
     
     % Replace C 'Inf' value (1e9) by Matlab Inf value.
     D(D > 1e8) = 0;
