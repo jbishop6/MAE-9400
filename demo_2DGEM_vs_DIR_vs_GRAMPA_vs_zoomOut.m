@@ -176,64 +176,49 @@ M.distances = [];  % Initialize M.distances
 % Debugging: print total number of segments
 fprintf('Total segments to process for M: %d\n', length(vec));
 
-for kk = 1:length(vec)
-    ending = vec(kk);
-    idx = beginning:ending;  % Define the range of start points
-    beginning = ending + 1;  % Update starting index for the next segment
+% Divide the vertices of M into chunks for processing 
+chunk_size = 10; % Define chunk size 
+num_chunks = ceil(n1 / chunk_size); 
 
-    % Debugging: Print progress
-    fprintf('Processing segment %d of M: start = %d, end = %d\n', kk, beginning, ending);
+% Initialize storage for distances 
+M.distances = []; 
 
-    try
-        % Ensure idx is within valid range
-        if any(idx > size(M.VERT, 1))
-            error('Start points (idx) out of range for M.VERT.');
-        end
+% Debugging: Print total number of chunks 
+fprintf('Total chunks to process for M: %d\n', num_chunks); 
 
+for kk = 1:num_chunks 
+    % Define chunk range 
+    start_idx = (kk - 1) * chunk_size + 1; 
+    end_idx = min(kk * chunk_size, n1); 
+    % Extract chunk of start points 
+    start_points_chunk = start_idx:end_idx; %
+    % Debugging: Print progress 
+    fprintf('Processing chunk %d of M: start = %d, end = %d\n', kk, start_idx, end_idx); 
+    try 
+        % Ensure start_points_chunk is within valid range
+        if any(start_points_chunk > size(M.VERT, 1)) 
+            error('Start points out of range for M.VERT.'); 
+        end 
         % Debugging: Print the indices we're passing to the function
-        fprintf('Passing indices %d to %d to perform_fast_marching_mesh for M...\n', idx(1), idx(end));
-
-        % Check if idx is valid (non-empty and within the number of vertices)
-        if isempty(idx) || any(idx > size(M.VERT, 1))
-            error('Invalid indices passed to perform_fast_marching_mesh for M');
-        end
-
-        % Check if we reach here
-        fprintf('Calling perform_fast_marching_mesh for M...\n');
-
-        % Call the fast marching function to calculate geodesic distances for M
-        fprintf('\nSize of vertices:')
-       disp(size(M.VERT))
-       fprintf('\nSize of faces')
-       disp(size(M.TRIV))
-       fprintf('\nSize of start points')
-       disp(idx)
-       fprintf(size(idx))
-       distances = perform_fast_marching_mesh(M.VERT', M.TRIV', idx, options.option1);
+        fprintf('Passing indices %d to %d to perform_fast_marching_mesh for M...\n', start_points_chunk(1), start_points_chunk(end));
+        % Call the fast marching function to calculate geodesic distances for M 
+        distances_chunk = perform_fast_marching_mesh(M.VERT', M.TRIV', start_points_chunk, options.option1);
+        % Store distances 
+        M.distances = [M.distances, distances_chunk]; fprintf('Finished chunk %d for M\n', kk); 
+        % Debugging print 
+    catch ME 
+        % If an error occurs, catch it and display the message and stack trace 
+        fprintf('Error occurred at chunk %d of M: %s\n', kk, ME.message); disp(ME.stack); rethrow(ME); 
+        % Re-throw the error to stop execution end end fprintf('Geodesic processing for M done \n'
 
 
-        % Check if distances are valid
-        if isempty(distances)
-            error('Distance calculation failed for M at segment %d\n', kk);
-        end
-
-        % Append the distances for the current segment
-        M.distances = [M.distances, distances];  
-        fprintf('Finished segment %d for M\n', kk);  % Debugging print
-    catch ME
-        % If an error occurs, catch it and display the message and stack trace
-        fprintf('Error occurred at segment %d of M: %s\n', kk, ME.message);
         disp(ME.stack);
-        rethrow(ME);  % Re-throw the error to stop execution
-    end
+        rethrow(ME); % Re-throw the error to stop execution 
+    end 
 end
 
+
 fprintf('Geodesic processing for M done \n');
-
-
-
-
-
 %% GEM
 disp('---- GEM preprocess ----')
 tic
