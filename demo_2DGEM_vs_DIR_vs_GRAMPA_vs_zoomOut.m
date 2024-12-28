@@ -50,10 +50,10 @@ name ='';
 % gt_in = [1:10988]';%11292
 
 i = '3311_surface'; 
-j = '4022_surface';
+% j = '4022_surface';
 
 % i = '5277_surface';
-% j = '5273_surface';
+j = '5273_surface';
 
 gt_in = [1:8515]';%11292
 
@@ -171,82 +171,92 @@ assert(all(~isinf(N.TRIV(:))), 'N.TRIV contains Inf values');
 
 disp('M.VERT, M.TRIV, N.VERT, and N.TRIV are valid.');
 
+%% Parallel Processing 
+% Profile the code execution
+profile on;
 
-%% Parallel processing for M and N 
+% Divide the vertices of M and N into chunks for processing
+chunk_size = 75;
 
-% Divide the vertices of M and N into chunks for processing 
-chunk_size = 100; 
+% Define chunk size
+num_chunks_M = ceil(n1 / chunk_size);
+num_chunks_N = ceil(n2 / chunk_size);
 
-% Define chunk size 
-num_chunks_M = ceil(n1 / chunk_size); 
-num_chunks_N = ceil(n2 / chunk_size); 
+% Initialize storage for distances
+distances_M = cell(1, num_chunks_M);
+distances_N = cell(1, num_chunks_N);
 
-% Initialize storage for distances 
-distances_M = cell(1, num_chunks_M); 
-distances_N = cell(1, num_chunks_N); 
-
-% Ensure any existing parallel pool is deleted 
+% Ensure any existing parallel pool is deleted
 delete(gcp('nocreate'));
 
-% Start parallel pool 
-parpool('local'); 
+% Start parallel pool with 12 workers  
+num_workers = 12; 
+parpool('local', num_workers);
 
-% Process chunks for M in parallel 
-parfor kk = 1:num_chunks_M 
-    % Define chunk range 
-    start_idx = (kk - 1) * chunk_size + 1; 
-    end_idx = min(kk * chunk_size, n1); 
-    
-    % Extract chunk of start points 
-    start_points_chunk = start_idx:end_idx; 
+% Process chunks for M in parallel using parfor
+parfor kk = 1:num_chunks_M
+    % Define chunk range
+    start_idx = (kk - 1) * chunk_size + 1;
+    end_idx = min(kk * chunk_size, n1);
 
-    % Debugging: Print progress 
-    fprintf('Processing chunk %d of M: start = %d, end = %d\n', kk, start_idx, end_idx); 
-    try 
-        % Call the fast marching function to calculate geodesic distances for M 
-        distances_chunk = perform_fast_marching_mesh(M.VERT', M.TRIV', start_points_chunk, options.option1); 
-        % Store distances 
-        distances_M{kk} = distances_chunk; 
-        fprintf('Finished chunk %d for M\n', kk); 
-    catch ME 
-        fprintf('Error occurred at chunk %d of M: %s\n', kk, ME.message); 
-        disp(ME.stack); 
-        rethrow(ME); 
-        % Re-throw the error to stop execution 
-    end 
-end 
+    % Extract chunk of start points
+    start_points_chunk = start_idx:end_idx;
 
-% Combine all chunk results into a single matrix for M 
-M.distances = cell2mat(distances_M); 
-% Process chunks for N in parallel 
+    % Debugging: Print progress
+    fprintf('Processing chunk %d of M: start = %d, end = %d\n', kk, start_idx, end_idx);
+    try
+        % Call the fast marching function to calculate geodesic distances for M
+        distances_chunk = perform_fast_marching_mesh(M.VERT', M.TRIV', start_points_chunk, options.option1);
 
-parfor kk = 1:num_chunks_N 
-    % Define chunk range 
-   start_idx = (kk - 1) * chunk_size + 1; 
-   end_idx = min(kk * chunk_size, n2); 
-   
-   % Extract chunk of start points 
-   start_points_chunk = start_idx:end_idx; 
+        % Store distances
+        distances_M{kk} = distances_chunk;
+        fprintf('Finished chunk %d for M\n', kk);
+    catch ME
+        fprintf('Error occurred at chunk %d of M: %s\n', kk, ME.message);
+        disp(ME.stack);
+    end
+end
 
-   % Debugging: Print progress 
-   fprintf('Processing chunk %d of N: start = %d, end = %d\n', kk, start_idx, end_idx); 
-   try 
-       % Call the fast marching function to calculate geodesic distances for N 
-       distances_chunk = perform_fast_marching_mesh(N.VERT', N.TRIV', start_points_chunk, options.option2); 
+% Combine all chunk results into a single matrix for M
+M.distances = cell2mat(distances_M);
 
-       % Store distances 
-       distances_N{kk} = distances_chunk; fprintf('Finished chunk %d for N\n', kk); 
-   catch ME 
-       fprintf('Error occurred at chunk %d of N: %s\n', kk, ME.message); 
-       disp(ME.stack); 
-       rethrow(ME); 
-       % Re-throw the error to stop execution 
-   end 
-end 
+% Process chunks for N in parallel using parfor
+parfor kk = 1:num_chunks_N
+    % Define chunk range
+    start_idx = (kk - 1) * chunk_size + 1;
+    end_idx = min(kk * chunk_size, n2);
 
-% Combine all chunk results into a single matrix for N 
+    % Extract chunk of start points
+    start_points_chunk = start_idx:end_idx;
 
+    % Debugging: Print progress
+    fprintf('Processing chunk %d of N: start = %d, end = %d\n', kk, start_idx, end_idx);
+    try
+        % Call the fast marching function to calculate geodesic distances for N
+        distances_chunk = perform_fast_marching_mesh(N.VERT', N.TRIV', start_points_chunk, options.option2);
+
+        % Store distances
+        distances_N{kk} = distances_chunk;
+        fprintf('Finished chunk %d for N\n', kk);
+    catch ME
+        fprintf('Error occurred at chunk %d of N: %s\n', kk, ME.message);
+        disp(ME.stack);
+    end
+end
+
+% Combine all chunk results into a single matrix for N
 N.distances = cell2mat(distances_N);
+
+% Shut down the parallel pool
+delete(gcp('nocreate'));
+
+% Stop profiling and view results
+profile off;
+profile viewer;
+
+disp('Geodesic processing for M and N done');
+
+
 %% geodesic distances for plot
 fprintf('geodesic processing Full N for plot... ');
 tic
