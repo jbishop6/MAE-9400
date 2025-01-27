@@ -50,15 +50,15 @@ name ='';
 % gt_in = [1:10988]';%11292
 
 i = '3311_surface'; 
-% j = '4022_surface';
+j = '4022_surface';
 
 % i = '5277_surface';
-j = '5273_surface';
+%j = '5273_surface';
 
 gt_in = [1:8515]';%11292
 
-% i = 'kid19'; 
-% j = 'kid20';
+%i = 'kid19'; 
+%j = 'kid20';
 % gt_in = [1:8515]';%11292
 
 filename1 = strcat(i, '.off');
@@ -68,8 +68,8 @@ filename2 = strcat(j, '.off');
 check_off_file(filename1)
 check_off_file(filename2)
 
-gt_M_null = read_correspondence(strcat(name, i, '.mat'));% load
-gt_N_null = read_correspondence(strcat(name, j, '.mat')); %load
+gt_M_null = read_correspondence(strcat(name, i, '_ref.txt'));% load
+gt_N_null = read_correspondence(strcat(name, j, '_ref.txt')); %load
 
 disp(size(gt_M_null));
 disp(size(gt_N_null));
@@ -110,151 +110,35 @@ N.nf = size(N.TRIV,1);
 N.nv = size(N.VERT,1);
 options.constraint_map = ones(M.nv, 1); % Default to ones (or customize as needed)
 %% GEM
-% Get number of vertices
-nverts = size(M.VERT, 1);  % or size(N.VERT, 1), depending on which mesh you are using
-
-% Initialize options structure
-options.option1.nb_iter_max = 30;
-options.option2.nb_iter_max = 120;
-options.nb_iter_max = inf;
-
-% Set L (constraint map) if not already provided
-if ~isfield(options, 'L')
-    options.L = ones(nverts, 1);  % Initialize L with ones (or any default value)
+disp('---- GEM preprocess ----')
+tic
+fprintf('geodesic processing for M...'); 
+M.distances = [];
+vec = double(int32(linspace(n1/5,n1,5)));
+%     disp(vec)
+begining = 1;
+for kk=1:length(vec)%1:n1
+    ending = vec(kk);
+    idx = begining:ending;
+    begining = ending + 1;
+    distances = perform_fast_marching_mesh(M.VERT', M.TRIV', idx, options.option1);
+    M.distances = [M.distances, distances];
+%         disp(size(M.distances))
 end
-
-% Check for NaN or Inf in L
-if any(isnan(options.L(:))) || any(isinf(options.L(:)))
-    disp('L (constraint map) contains NaN or Inf values.');
-    options.L(isnan(options.L) | isinf(options.L)) = 0;  % Replace NaN/Inf with 0
+fprintf('done \n'); 
+fprintf('geodesic processing for N...'); 
+N.distances = [];
+vec = double(int32(linspace(n2/5,n2,5)));
+begining = 1;
+for kk=1:length(vec)%1:n2
+   ending = vec(kk);
+   idx = begining:ending;
+   begining = ending + 1;
+   distances = perform_fast_marching_mesh(N.VERT', N.TRIV', idx, options.option2);
+   N.distances = [N.distances, distances];
 end
-
-% Define end_points explicitly if not provided in the options
-if ~isfield(options.option1, 'end_points') || isempty(options.option1.end_points)
-    options.option1.end_points = 1:size(M.VERT, 1);  % Use all vertices as end points
-end
-
-% Check M.VERT and M.TRIV for NaNs or Infs
-if any(isnan(M.VERT(:))) || any(isinf(M.VERT(:)))
-    error('M.VERT contains NaN or Inf values!');
-end
-
-if any(isnan(M.TRIV(:))) || any(isinf(M.TRIV(:)))
-    error('M.TRIV contains NaN or Inf values!');
-end
-
-disp('M.VERT and M.TRIV are valid.');
-
-
-
-%% Debugging
-% Check for NaN or Inf in L 
-if any(isnan(options.L(:))) || any(isinf(options.L(:))) 
-    disp('L (constraint map) contains NaN or Inf values.'); 
-    options.L(isnan(options.L) | isinf(options.L)) = 0; % Replace NaN/Inf with 0 
-end 
-
-% Define end_points explicitly if not provided in the options 
-if ~isfield(options.option1, 'end_points') || isempty(options.option1.end_points) 
-    options.option1.end_points = 1:size(M.VERT, 1); % Use all vertices as end points 
-end 
-
-% Check M.VERT and M.TRIV for NaNs or Infs 
-assert(all(~isnan(M.VERT(:))), 'M.VERT contains NaN values'); 
-assert(all(~isinf(M.VERT(:))), 'M.VERT contains Inf values'); 
-assert(all(~isnan(M.TRIV(:))), 'M.TRIV contains NaN values'); 
-assert(all(~isinf(M.TRIV(:))), 'M.TRIV contains Inf values'); 
-assert(all(~isnan(N.VERT(:))), 'N.VERT contains NaN values'); 
-assert(all(~isinf(N.VERT(:))), 'N.VERT contains Inf values'); 
-assert(all(~isnan(N.TRIV(:))), 'N.TRIV contains NaN values'); 
-assert(all(~isinf(N.TRIV(:))), 'N.TRIV contains Inf values'); 
-
-disp('M.VERT, M.TRIV, N.VERT, and N.TRIV are valid.');
-
-%% Parallel Processing 
-% Profile the code execution
-profile on;
-
-% Divide the vertices of M and N into chunks for processing
-chunk_size = 75;
-
-% Define chunk size
-num_chunks_M = ceil(n1 / chunk_size);
-num_chunks_N = ceil(n2 / chunk_size);
-
-% Initialize storage for distances
-distances_M = cell(1, num_chunks_M);
-distances_N = cell(1, num_chunks_N);
-
-% Ensure any existing parallel pool is deleted
-delete(gcp('nocreate'));
-
-% Start parallel pool with 12 workers  
-num_workers = 12; 
-parpool('local', num_workers);
-
-% Process chunks for M in parallel using parfor
-parfor kk = 1:num_chunks_M
-    % Define chunk range
-    start_idx = (kk - 1) * chunk_size + 1;
-    end_idx = min(kk * chunk_size, n1);
-
-    % Extract chunk of start points
-    start_points_chunk = start_idx:end_idx;
-
-    % Debugging: Print progress
-    fprintf('Processing chunk %d of M: start = %d, end = %d\n', kk, start_idx, end_idx);
-    try
-        % Call the fast marching function to calculate geodesic distances for M
-        distances_chunk = perform_fast_marching_mesh(M.VERT', M.TRIV', start_points_chunk, options.option1);
-
-        % Store distances
-        distances_M{kk} = distances_chunk;
-        fprintf('Finished chunk %d for M\n', kk);
-    catch ME
-        fprintf('Error occurred at chunk %d of M: %s\n', kk, ME.message);
-        disp(ME.stack);
-    end
-end
-
-% Combine all chunk results into a single matrix for M
-M.distances = cell2mat(distances_M);
-
-% Process chunks for N in parallel using parfor
-parfor kk = 1:num_chunks_N
-    % Define chunk range
-    start_idx = (kk - 1) * chunk_size + 1;
-    end_idx = min(kk * chunk_size, n2);
-
-    % Extract chunk of start points
-    start_points_chunk = start_idx:end_idx;
-
-    % Debugging: Print progress
-    fprintf('Processing chunk %d of N: start = %d, end = %d\n', kk, start_idx, end_idx);
-    try
-        % Call the fast marching function to calculate geodesic distances for N
-        distances_chunk = perform_fast_marching_mesh(N.VERT', N.TRIV', start_points_chunk, options.option2);
-
-        % Store distances
-        distances_N{kk} = distances_chunk;
-        fprintf('Finished chunk %d for N\n', kk);
-    catch ME
-        fprintf('Error occurred at chunk %d of N: %s\n', kk, ME.message);
-        disp(ME.stack);
-    end
-end
-
-% Combine all chunk results into a single matrix for N
-N.distances = cell2mat(distances_N);
-
-% Shut down the parallel pool
-delete(gcp('nocreate'));
-
-% Stop profiling and view results
-profile off;
-profile viewer;
-
-disp('Geodesic processing for M and N done');
+fprintf('done \n');
+toc
 
 
 %% geodesic distances for plot
