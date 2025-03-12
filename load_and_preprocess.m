@@ -4,8 +4,21 @@ disp('----------------------------------')
 disp(strcat(path_track, meshes, name, i, '.off'))
 fprintf('Loading VERT, TRIV... ')
 
-[M.VERT,M.TRIV] = ReadOFF(strcat(name, i, '.off'));
+% [M.VERT,M.TRIV] = ReadOFF(strcat(name, i, '.off'));
 % M = load_off(strcat(path_track, meshes, name, i, '.off'));
+
+% Must replace reading the off file to reading a .mat file
+data = load(strcat(name,i,'.mat'));
+
+% Extracting vert and triv from data
+if isfield(data,'fv') && isfield(data.fv,'vertices') && isfield(data.fv,'faces')
+    M.VERT = data.fv.vertices;
+    M.TRIV = data.fv.faces;
+    M.n = size(M.VERT,1);
+else
+    error('.mat file does not contain VERT and TRIV variables.')
+end
+
 M.n = length(M.VERT);
 n1=M.n;
 fprintf('done \n')
