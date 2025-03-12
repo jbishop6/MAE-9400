@@ -45,40 +45,12 @@ name ='';
 
 %% %%for non_isometric uncomment any of the pairs below and the gt_in line
 %% as well as lines 58-61
-% i = 'kid16'; 
-% j = 'kid17';
-% gt_in = [1:10988]';%11292
 % 
 i = '3311_surface'; 
-j = '4022_surface';
+% j = '4022_surface';
 
-% i = '5277_surface';
-%j = '5273_surface';
-
-gt_in = [1:8515]';%11292
-
-%i = 'kid19'; 
-%j = 'kid20';
-% gt_in = [1:8515]';%11292
-% 
-% filename1 = strcat(i, '.off');
-% filename2 = strcat(j, '.off');
-
-
-% check_off_file(filename1)
-% check_off_file(filename2)
-% 
-% 
-% gt_M_null = read_correspondence(strcat(name, i, '_ref.txt'));% load
-% gt_N_null = read_correspondence(strcat(name, j, '_ref.txt')); %load
-
-
-
-
-% disp(size(gt_M_null));
-% disp(size(gt_N_null));
-% gt = merge_ground_truth(gt_M_null, gt_N_null); % merge
-% disp(size(gt));
+% j = '5277_surface';
+j = '5273_surface';
 
 %% specs for GEM & DIR
 if ~(options.isometric)
@@ -102,50 +74,6 @@ disp(['N has ', num2str(size(N.VERT,1)), ' vertices']);
 
 disp(['Number of vertices in N: ', num2str(size(N.VERT,1))]);
 disp(['Number of triangles in N: ', num2str(size(N.TRIV,1))]);
-
-
-
-%  Remove Invalid Triangles (Triangles with duplicate vertices)
-valid_triangles = (N.TRIV(:,1) ~= N.TRIV(:,2)) & (N.TRIV(:,2) ~= N.TRIV(:,3)) & (N.TRIV(:,1) ~= N.TRIV(:,3));
-N.TRIV = N.TRIV(valid_triangles, :);
-disp(['Number of valid triangles in N: ', num2str(size(N.TRIV, 1))]);
-
-%  Remove Duplicate Triangles (Exact Duplicates)
-N.TRIV = unique(sort(N.TRIV, 2), 'rows');
-disp(['Number of unique triangles after removing duplicates: ', num2str(size(N.TRIV,1))]);
-
-% ️ Remove Duplicate Vertices (BEFORE Remapping Triangles)
-[unique_VERT, unique_idx, new_idx] = unique(N.VERT, 'rows', 'stable');
-disp(['Original vertices in N: ', num2str(size(N.VERT, 1))]);
-disp(['Unique vertices in N: ', num2str(size(unique_VERT, 1))]);
-
-% ONLY Update `N.VERT` If It Changed
-if size(unique_VERT, 1) < size(N.VERT, 1)
-    disp('Removing duplicate vertices and remapping triangles...');
-    N.VERT = unique_VERT;
-    
-    % Fix triangle indices to reference new vertex list
-    valid_triangles = all(N.TRIV <= size(N.VERT, 1), 2);
-    N.TRIV = new_idx(N.TRIV(valid_triangles, :)); 
-    disp(['Updated number of valid triangles after vertex remapping: ', num2str(size(N.TRIV,1))]);
-else
-    disp('No duplicate vertices found. Keeping original N.VERT.');
-end
-
-% Ensure No Triangles Reference Deleted Vertices
-max_index = max(N.TRIV(:));
-if max_index > size(N.VERT,1)
-    disp('⚠️ ERROR: Some triangles reference deleted vertices! Fixing...');
-    
-    % Remove any invalid triangles
-    valid_triangles = all(N.TRIV <= size(N.VERT,1), 2);
-    N.TRIV = N.TRIV(valid_triangles, :);
-    disp(['Final number of valid triangles: ', num2str(size(N.TRIV,1))]);
-end
-
-% Flip Triangle Orientation to Ensure Consistent Face Normals
-N.TRIV = N.TRIV(:, [1, 3, 2]);
-disp('Flipped triangle orientation for N.');
 
 
 
@@ -394,6 +322,8 @@ disp('Adjusted size of corr_DIR:');
 disp(size(corr_DIR));
 disp('Adjusted size of corr_ZoomOut:');
 disp(size(corr_ZoomOut));
+
+
 
 % Perform the concatenation
 all_corr{1} = [gt_in, corr_GEM];

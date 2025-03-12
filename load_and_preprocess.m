@@ -1,11 +1,9 @@
 function [N, M, n1, n2, diameters, corr_true] = load_and_preprocess(i,j,path_track, meshes, corres, name, options)
 %% Loading M
 disp('----------------------------------')
-disp(strcat(path_track, meshes, name, i, '.off'))
+disp(strcat(path_track, meshes, name, i, '.mat'))
 fprintf('Loading VERT, TRIV... ')
 
-% [M.VERT,M.TRIV] = ReadOFF(strcat(name, i, '.off'));
-% M = load_off(strcat(path_track, meshes, name, i, '.off'));
 
 % Must replace reading the off file to reading a .mat file
 data = load(strcat(name,i,'.mat'));
@@ -27,13 +25,9 @@ fprintf('done \n')
 
 fprintf('preprocessing adj...')
 M.adj = digraph(M.TRIV, M.TRIV(:, [2 3 1])); % just use matlab function seems much faster
-% plot(M.adj)
 M.adj = adjacency(M.adj);
-% disp(size(M.adj(M.adj>0), 1))
 M.adj = M.adj | M.adj';
-% disp(size(M.adj(M.adj>0), 1))
-% % disp(M.adj(1:20, 1:20))
-% % M.adj = eye(M.n)+ M.adj; %Best GINConv
+
 fprintf('done \n')
 
 
@@ -55,11 +49,21 @@ M.shots = calc_shot(M.VERT', M.TRIV', 1:n1, options.shot_num_bins, options.shot_
 %% Loading N
 disp('----------------------------------')
 
-disp(strcat(path_track, meshes, name, j, '.off'))
+disp(strcat(path_track, meshes, name, j, '.mat'))
 fprintf('Loading TRIV, VERT ...')
 
-[N.VERT, N.TRIV] = ReadOFF(strcat(name, j, '.off'));
-% N = load_off(strcat(path_track, meshes, name, j, '.off'));
+data = load(strcat(name,j,'.mat'));
+
+% Extracting vert and triv from data
+if isfield(data,'fv') && isfield(data.fv,'vertices') && isfield(data.fv,'faces')
+    N.VERT = data.fv.vertices;
+    N.TRIV = data.fv.faces;
+    N.n = size(N.VERT,1);
+else
+    error('.mat file does not contain VERT and TRIV variables.')
+end
+
+
 N.n = length(N.VERT);
 n2=size(N.VERT,1);
 fprintf('done.\n')
@@ -70,10 +74,6 @@ if (options.isometric)
         fprintf('Shuffling TRIV and VERT since isometric... ')
         corr_true = randperm(N.n)'; % shuffle points. Point i in shape 2 corrsponds to point corr_true(i) in shape 1.
         corr_true_reverse(corr_true,1) = 1:N.n; % Point i in shape 1 corrsponds to point corr_true_reverse(i) in shape 2.
-        % disp(size(corr_true_reverse))
-        % disp(corr_true_reverse(1:10))
-    %     corr_true = randperm(N.n)'; % shuffle points. Point i in shape 2 corrsponds to point corr_true(i) in shape 1.
-    %     corr_true_reverse(corr_true,1) = 1:N.n; % Point i in shape 1 corrsponds to point corr_true_reverse(i) in shape 2.
         N.VERT = N.VERT(corr_true, :); 
         N.TRIV = corr_true_reverse(N.TRIV);
         fprintf('done.\n')
