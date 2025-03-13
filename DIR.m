@@ -63,21 +63,6 @@ for kk = 1:iter_number
     good = 1:num;  % Initialize 'good' inside the loop
     valid_good = good(good <= size(D1, 2));  % Ensure 'good' is within bounds of D1
 
-    % Debugging print statements
-    disp('Iter:');
-    disp(kk);
-    disp('Size of D1:');
-    disp(size(D1));
-    disp('Size of D2:');
-    disp(size(D2));
-    disp('Values in corr_true(good):');
-    disp(corr_true(valid_good));
-    disp('Values in good:');
-    disp(valid_good);
-    disp('Length of valid_good:');
-    disp(length(valid_good));
-    disp('Length of valid_corr)));_true:');
-    disp(length(corr_true(valid_good
 
     % Correctly initialize 'ee' based on 'valid_good'
     ee = zeros(length(valid_good), 1);
@@ -86,10 +71,6 @@ for kk = 1:iter_number
     D1T = D1(corr_true(valid_good), valid_good);
     D2T = D2(valid_good);  % Corrected indexing here
 
-    disp('D1T size:');
-    disp(size(D1T));
-    disp('D2T size:');
-    disp(size(D2T));
 
     DD1 = cell(length(valid_good), 1);
     DD2 = cell(length(valid_good), 1);
@@ -136,12 +117,6 @@ for kk = 1:iter_number
     % Remove NaN values from ee before assignment
     ee = ee(~isnan(ee));
     valid_good = valid_good(~isnan(ee));
-
-    % Debugging lengths before assignment
-    disp('Length of ee:');
-    disp(length(ee));
-    disp('Length of valid_good:');
-    disp(length(valid_good));
 
     % Ensure 'ee' and 'valid_good' have the same length before assignment
     if length(ee) ~= length(valid_good)
