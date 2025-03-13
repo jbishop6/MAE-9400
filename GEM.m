@@ -55,11 +55,9 @@ for kk = 1:options.maxIter
     idx = cell(num, 1);
 
     % good = 1:num;  % Good is a subset of indexes we process
+    good = 1:min(size(surf1.distances, 1), size(surf2.distances, 1)); % Ensures both match
 
-    good = 1:min(size(surf2.distances, 1), size(surf1.distances, 1)); % Covers full vertex set
 
-    % Ensure 'good' and 'corr_true' are valid for surf1.distances indexing
-    good = good(good <= size(surf1.distances, 2));
     corr_true = corr_true(corr_true <= size(surf1.distances, 1));
 
     % Correctly initialize 'ee' to be of length 'good'
@@ -92,7 +90,8 @@ for kk = 1:options.maxIter
 
     % Safe indexing of surf1.distances and surf2.distances with corrected 'good' and 'pertF(good)'
     D1T = surf1.distances(corr_true(good), good);
-    D2T = surf2.distances(good);
+    % D2T = surf2.distances(good);
+    D2T = surf2.distances(good, good);  % Ensure it only gets needed rows/cols
 
     disp('Debugging surf1.distances and surf2.distances indexing...');
     disp(['Size of surf1.distances: ', num2str(size(surf1.distances, 1)), ' x ', num2str(size(surf1.distances, 2))]);
@@ -107,8 +106,10 @@ for kk = 1:options.maxIter
     for i = 1:length(good)
         idx{i} = find(D1T(:, i) ~= 0);
         DD1{i} = D1T(idx{i}, i);
-        DD2{i} = D2T(idx{i});  % Correctly indexing 'D2T' as a column vector
-        DD2{i}(DD2{i} == 0) = R_max;
+        % DD2{i} = D2T(idx{i});  % Correctly indexing 'D2T' as a column vector
+        % DD2{i}(DD2{i} == 0) = R_max;
+        valid_idx = idx{i}(idx{i} <= size(D2T, 1)); % Ensure indices are within bounds
+        DD2{i} = D2T(valid_idx);
         r = max(DD1{i});
         ee(i) = sum(((abs(DD1{i} - DD2{i})) / r) .* MA(idx{i})) / sum(MA(idx{i}));
     end
