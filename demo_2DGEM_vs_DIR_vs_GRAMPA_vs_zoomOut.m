@@ -47,10 +47,10 @@ name ='';
 %% as well as lines 58-61
 % 
 i = '3311_surface'; 
-% j = '4022_surface';
+j = '4022_surface';
 
 % j = '5277_surface';
-j = '5273_surface';
+% j = '5273_surface';
 
 %% specs for GEM & DIR
 if ~(options.isometric)
@@ -144,8 +144,8 @@ end
 % Compute Euclidean distance for each candidate and pick the best match
 % Ensure idx_all is properly shaped before passing to pdist2
 distances_matrix = zeros(size(M_desc,1), k); % Preallocate correct size
-for i = 1:size(M_desc,1)
-    distances_matrix(i, :) = pdist2(M_desc(i, :), N_desc(idx_all(i, :), :), 'euclidean');
+for l = 1:size(M_desc,1)
+    distances_matrix(l, :) = pdist2(M_desc(l, :), N_desc(idx_all(l, :), :), 'euclidean');
 end
 
 distances_matrix = reshape(distances_matrix, size(M_desc,1), k); % Reshape to match M.n × k
@@ -258,7 +258,7 @@ corr_GEM = GEM(M, N, corr_true, options);
 toc
 [corr_GEM, ~] = find(corr_GEM);
 % corr = [gt_in, corr_GEM];
-figure(1);
+figure;
 subplot(1,2,1); visualize_map_on_source(M, N, corr_GEM); title('Source');
 subplot(1,2,2); visualize_map_on_target(M, N, corr_GEM); title('2D-GEM')
 
@@ -271,9 +271,11 @@ if ~(options.isometric)
 end
 disp('------DIR------')
 tic
-corr_DIR = DIR(strcat(i, '.off'), strcat(j, '.off'), options, corr_true);
+% corr_DIR = DIR(strcat(i), strcat(j), options, corr_true);
+corr_DIR = DIR(strcat(i), strcat(j), options, corr_true);
+
 toc
-figure(2);
+figure;
 subplot(1,2,1); visualize_map_on_source(M, N, corr_DIR); title('Source');
 subplot(1,2,2); visualize_map_on_target(M, N, corr_DIR); title('DIR')
 
@@ -283,7 +285,7 @@ tic
 corr_GRAMPA = GRAMPA(M, N, options, 1); %eta 1 as in original paper
 [corr_GRAMPA, ~] = find(corr_GRAMPA);
 toc
-figure(3)
+figure;
 subplot(1,2,1); visualize_map_on_source(M, N, corr_GRAMPA); title('Source');
 subplot(1,2,2); visualize_map_on_target(M, N, corr_GRAMPA); title('GRAMPA')
 
@@ -296,7 +298,7 @@ options.k_final = 200; % as in original paper from 4 or 20 to a max of 200
 tic
 [corr_ZoomOut, ~, ~, ~] = zoomOut_refine(M, N, options);
 toc
-figure(4)
+figure;
 subplot(1,2,1); visualize_map_on_source(M, N, corr_ZoomOut); title('Source');
 subplot(1,2,2); visualize_map_on_target(M, N, corr_ZoomOut); title('ZoomOut')
 
@@ -367,7 +369,7 @@ for i = 1:4
 
     all_curves{i} = curve;
 end
-figure(5);
+figure;
 subplot(1,6,1); visualize_map_on_source(M, N, corr_GEM); title('Source');
 subplot(1,6,2); visualize_map_on_target(M, N, corr_GEM); title('GEM')
 subplot(1,6,3); visualize_map_on_target(M, N, corr_GRAMPA); title('GRAMPA');
@@ -375,7 +377,7 @@ subplot(1,6,4); visualize_map_on_target(M, N, corr_DIR); title('DIR')
 subplot(1,6,5); visualize_map_on_target(M, N, corr_ZoomOut); title('ZoomOut')
 
 % Plot all curves
-figure(7);
+figure;
 plot(thresholds', mean(all_curves{1}, 1)', thresholds', mean(all_curves{2}, 1)', thresholds', mean(all_curves{3}, 1)', thresholds', mean(all_curves{4}, 1)');
 % ylim([0 100]);
 line_width = 1.5;

@@ -63,22 +63,22 @@ for kk = 1:options.maxIter
     % Correctly initialize 'ee' to be of length 'good'
     ee = zeros(length(good), 1);
 
-    disp('Size of surf1.distances:');
-    disp(size(surf1.distances));
-    disp('corr_true(good):');
-    disp(corr_true(good));
-    disp('good:');
-    disp(good);
-
-    disp('Size of surf2.distances:');
-    disp(size(surf2.distances));
-    disp('Values in good:');
-    disp(good);
-    disp('Values in pertF(good):');
-    disp(pertF(good));
-
-    disp('First 10 values of good:');
-    disp(good(1:min(10, length(good))));
+    % disp('Size of surf1.distances:');
+    % disp(size(surf1.distances));
+    % disp('corr_true(good):');
+    % disp(corr_true(good));
+    % disp('good:');
+    % disp(good);
+    % 
+    % disp('Size of surf2.distances:');
+    % disp(size(surf2.distances));
+    % disp('Values in good:');
+    % disp(good);
+    % disp('Values in pertF(good):');
+    % disp(pertF(good));
+    % 
+    % disp('First 10 values of good:');
+    % disp(good(1:min(10, length(good))));
 
     if any(good > size(surf2.distances, 1))
         error('ERROR: Index out of bounds for surf2.distances!');
@@ -93,15 +93,15 @@ for kk = 1:options.maxIter
     % D2T = surf2.distances(good);
     D2T = surf2.distances(good, good);  % Ensure it only gets needed rows/cols
 
-    disp('Debugging surf1.distances and surf2.distances indexing...');
-    disp(['Size of surf1.distances: ', num2str(size(surf1.distances, 1)), ' x ', num2str(size(surf1.distances, 2))]);
-    disp(['Size of surf2.distances: ', num2str(size(surf2.distances, 1)), ' x ', num2str(size(surf2.distances, 2))]);
-
-    disp(['Max index in corr_true(good): ', num2str(max(corr_true(good)))]);
-    disp(['Max index in good: ', num2str(max(good))]);
-
-    disp('First 10 values of corr_true(good):');
-    disp(corr_true(good(1:min(10, length(good)))));
+    % disp('Debugging surf1.distances and surf2.distances indexing...');
+    % disp(['Size of surf1.distances: ', num2str(size(surf1.distances, 1)), ' x ', num2str(size(surf1.distances, 2))]);
+    % disp(['Size of surf2.distances: ', num2str(size(surf2.distances, 1)), ' x ', num2str(size(surf2.distances, 2))]);
+    % 
+    % disp(['Max index in corr_true(good): ', num2str(max(corr_true(good)))]);
+    % disp(['Max index in good: ', num2str(max(good))]);
+    % 
+    % disp('First 10 values of corr_true(good):');
+    % disp(corr_true(good(1:min(10, length(good)))));
 
     for i = 1:length(good)
         idx{i} = find(D1T(:, i) ~= 0);
