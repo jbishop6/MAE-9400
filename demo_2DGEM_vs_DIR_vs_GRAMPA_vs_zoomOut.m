@@ -262,7 +262,6 @@ if ~(options.isometric)
 end
 disp('------DIR------')
 tic
-% corr_DIR = DIR(strcat(i), strcat(j), options, corr_true);
 corr_DIR = DIR(strcat(i), strcat(j), options, corr_true);
 
 toc
@@ -307,17 +306,6 @@ corr_GRAMPA = corr_GRAMPA(1:min_length, :);
 corr_DIR = corr_DIR(1:min_length, :);
 corr_ZoomOut = corr_ZoomOut(1:min_length, :);
 
-% Debugging check
-disp('Adjusted size of gt_in:');
-disp(size(gt_in));
-disp('Adjusted size of corr_GEM:');
-disp(size(corr_GEM));
-disp('Adjusted size of corr_GRAMPA:');
-disp(size(corr_GRAMPA));
-disp('Adjusted size of corr_DIR:');
-disp(size(corr_DIR));
-disp('Adjusted size of corr_ZoomOut:');
-disp(size(corr_ZoomOut));
 
 
 
@@ -347,19 +335,11 @@ for i = 1:4
     end
     thresholds = 0:0.01:0.25;
     errors = errors / diameters;
-    
-    % Debugging: Print error values
-    disp(['Errors for corr ' num2str(i) ':']);
-    disp(errors);
 
     curve = zeros(1, length(thresholds));
     for m = 1:length(thresholds)
         curve(m) = 100 * sum(errors <= thresholds(m)) / length(errors);
     end
-    
-    % Debugging: Print curve values
-    disp(['Curve for corr ' num2str(i) ':']);
-    disp(curve);
 
     all_curves{i} = curve;
 end
@@ -373,7 +353,6 @@ subplot(1,6,5); visualize_map_on_target(M, N, corr_ZoomOut); title('ZoomOut')
 % Plot all curves
 figure;
 plot(thresholds', mean(all_curves{1}, 1)', thresholds', mean(all_curves{2}, 1)', thresholds', mean(all_curves{3}, 1)', thresholds', mean(all_curves{4}, 1)');
-% ylim([0 100]);
 line_width = 1.5;
 hline = findobj(gcf, 'type', 'line');
 set(hline, 'LineWidth', line_width);
