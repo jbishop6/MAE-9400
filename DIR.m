@@ -9,7 +9,7 @@ th = options.th;
 iter_number = options.maxIter;
 
 %%
-% [surf2.pt, surf2.trg] = ReadOFF(name2);
+% Had to replace .off with .mat
 data2 = load(strcat(name2, '.mat'));  
 if isfield(data2, 'fv') && isfield(data2.fv, 'vertices') && isfield(data2.fv, 'faces')
     surf2.pt = data2.fv.vertices;
@@ -28,7 +28,7 @@ Xdesc = calc_shot(surf2.pt', surf2.trg', 1:num2, opts.shot_num_bins, opts.shot_r
 vertex2 = surf2.pt';
 faces2 = surf2.trg';
 
-% [surf1.pt, surf1.trg] = ReadOFF(name1);
+% Had to replace .off with .mat
 data1 = load(strcat(name1, '.mat'));  
 if isfield(data1, 'fv') && isfield(data1.fv, 'vertices') && isfield(data1.fv, 'faces')
     surf1.pt = data1.fv.vertices;
@@ -76,8 +76,8 @@ for kk = 1:iter_number
     disp(valid_good);
     disp('Length of valid_good:');
     disp(length(valid_good));
-    disp('Length of valid_corr_true:');
-    disp(length(corr_true(valid_good)));
+    disp('Length of valid_corr)));_true:');
+    disp(length(corr_true(valid_good
 
     % Correctly initialize 'ee' based on 'valid_good'
     ee = zeros(length(valid_good), 1);
@@ -109,15 +109,7 @@ for kk = 1:iter_number
         
         DD2{i}(DD2{i} == 0) = R_max;
 
-        % Print the sizes and values of DD1{i} and DD2{i} to debug dimension mismatch
-        disp('Size of DD1{i}:');
-        disp(size(DD1{i}));
-        disp('Size of DD2{i}:');
-        disp(size(DD2{i}));
-        disp('Values in DD1{i}:');
-        disp(DD1{i});
-        disp('Values in DD2{i}:');
-        disp(DD2{i});
+     
 
         % Check if sizes match before performing the calculation
         if length(DD1{i}) ~= length(DD2{i})
@@ -130,7 +122,15 @@ for kk = 1:iter_number
         end
 
         % Calculate ee(i) safely with matching dimensions
-        ee(i) = sum(((abs(DD1{i} - DD2{i})) / r) .* MA(idx{i})) / sum(MA(idx{i}));
+        numerator = sum(sum(((abs(DD1{i} - DD2{i})) / r) .* MA(idx{i}))); % Double sum to ensure scalar
+        denominator = sum(MA(idx{i})); % Ensure single scalar value
+
+        if denominator == 0  % Avoid division by zero
+            ee(i) = 0;
+        else
+            ee(i) = numerator / denominator; % Ensure scalar assignment
+        end
+
     end
 
     % Remove NaN values from ee before assignment

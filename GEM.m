@@ -54,7 +54,7 @@ for kk = 1:options.maxIter
     DD2 = cell(surf2.n, 1);
     idx = cell(num, 1);
 
-    % good = 1:num;  % Good is a subset of indexes we process
+    
     good = 1:min(size(surf1.distances, 1), size(surf2.distances, 1)); % Ensures both match
 
 
@@ -62,23 +62,6 @@ for kk = 1:options.maxIter
 
     % Correctly initialize 'ee' to be of length 'good'
     ee = zeros(length(good), 1);
-
-    % disp('Size of surf1.distances:');
-    % disp(size(surf1.distances));
-    % disp('corr_true(good):');
-    % disp(corr_true(good));
-    % disp('good:');
-    % disp(good);
-    % 
-    % disp('Size of surf2.distances:');
-    % disp(size(surf2.distances));
-    % disp('Values in good:');
-    % disp(good);
-    % disp('Values in pertF(good):');
-    % disp(pertF(good));
-    % 
-    % disp('First 10 values of good:');
-    % disp(good(1:min(10, length(good))));
 
     if any(good > size(surf2.distances, 1))
         error('ERROR: Index out of bounds for surf2.distances!');
@@ -90,35 +73,18 @@ for kk = 1:options.maxIter
 
     % Safe indexing of surf1.distances and surf2.distances with corrected 'good' and 'pertF(good)'
     D1T = surf1.distances(corr_true(good), good);
-    % D2T = surf2.distances(good);
     D2T = surf2.distances(good, good);  % Ensure it only gets needed rows/cols
 
-    % disp('Debugging surf1.distances and surf2.distances indexing...');
-    % disp(['Size of surf1.distances: ', num2str(size(surf1.distances, 1)), ' x ', num2str(size(surf1.distances, 2))]);
-    % disp(['Size of surf2.distances: ', num2str(size(surf2.distances, 1)), ' x ', num2str(size(surf2.distances, 2))]);
-    % 
-    % disp(['Max index in corr_true(good): ', num2str(max(corr_true(good)))]);
-    % disp(['Max index in good: ', num2str(max(good))]);
-    % 
-    % disp('First 10 values of corr_true(good):');
-    % disp(corr_true(good(1:min(10, length(good)))));
+  
 
     for i = 1:length(good)
         idx{i} = find(D1T(:, i) ~= 0);
         DD1{i} = D1T(idx{i}, i);
-        % DD2{i} = D2T(idx{i});  % Correctly indexing 'D2T' as a column vector
-        % DD2{i}(DD2{i} == 0) = R_max;
         valid_idx = idx{i}(idx{i} <= size(D2T, 1)); % Ensure indices are within bounds
         DD2{i} = D2T(valid_idx);
         r = max(DD1{i});
         ee(i) = sum(((abs(DD1{i} - DD2{i})) / r) .* MA(idx{i})) / sum(MA(idx{i}));
     end
-
-    % Debugging print statements
-    disp('Length of good:');
-    disp(length(good));
-    disp('Length of ee:');
-    disp(length(ee));
 
     % Ensure 'ee' and 'good' have the same length before assignment
     if length(ee) ~= length(good)

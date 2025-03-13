@@ -118,15 +118,6 @@ disp(['Size of N_desc: ', num2str(size(N_desc))]);
 similarity = M_desc * N_desc'; % Cosine similarity matrix
 [~, idx] = max(similarity, [], 2); % Best match for each M vertex
 
-% Store correspondences
-% gt = [(1:M.n)', idx]; 
-% % disp(['Unique points mapped in N: ', num2str(length(unique(gt(:,2))))]);
-% % disp(['Total vertices in N: ', num2str(size(N.VERT,1))]);
-% 
-% disp('First 20 entries in gt (M -> N):');
-% disp(gt(1:20, :));
-% 
-% disp(['Number of repeated matches in N: ', num2str(size(gt,1) - length(unique(gt(:,2))))]);
 
 k = 5; % Number of closest candidates per point
 Mdl = KDTreeSearcher(N_desc); % Build KD-tree for fast searching
@@ -306,6 +297,9 @@ subplot(1,2,2); visualize_map_on_target(M, N, corr_ZoomOut); title('ZoomOut')
 all_corr = cell(4,1);
 
 % Ensure dimensions match before concatenation
+gt_in = (1:min(size(M.VERT, 1), size(N.VERT, 1)))';
+
+
 min_length = min([size(gt_in, 1), size(corr_GEM, 1), size(corr_GRAMPA, 1), size(corr_DIR, 1), size(corr_ZoomOut, 1)]);
 gt_in = gt_in(1:min_length, :);
 corr_GEM = corr_GEM(1:min_length, :);
